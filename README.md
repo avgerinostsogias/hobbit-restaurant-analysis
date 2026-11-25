@@ -20,8 +20,8 @@ These findings describe the **312 complete responses** used in the main analysis
 
 ## Report and code
 
-- [Read the report](Hobbit_Restaurant_Original_Style_Report.pdf) for the charts, methods, and results.
-- [Read the R script](Hobbit_Restaurant_Analysis.R) for the full workflow.
+- [Read the report](Hobbit_Restaurant_Statistical_Analysis.pdf) for the charts, methods, and results.
+- [Read the R script](Hobbit_Restaurant_Statistical_Analysis.R) for the full workflow.
 
 ## Data and how to run
 
