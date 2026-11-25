@@ -1,13 +1,22 @@
 # Hobbit's Choice restaurant survey
-# Open this UTF-8 file in RStudio and click Source.
+# Open in RStudio and click Source, or pass the workbook path to Rscript.
 # Packages, if needed: install.packages(c("readxl", "ggplot2", "dplyr"))
 library(readxl)
 library(ggplot2)
 library(dplyr)
 
-input_file <- file.path(Sys.getenv("USERPROFILE"), "Downloads", "Hobbit_values.xls")
+# Use the workbook in the working directory or supply its full path.
+args <- if (interactive()) character() else commandArgs(trailingOnly = TRUE)
+input_file <- if (length(args)) args[1] else "Hobbit_values.xls"
+
 if (!file.exists(input_file) && interactive()) {
-  input_file <- file.choose()
+  message("Select the original Hobbit_values.xls workbook if you have it.")
+  input_file <- tryCatch(file.choose(), error = function(e) "")
+}
+if (!file.exists(input_file)) {
+  stop("The original Hobbit_values.xls workbook is required to run this analysis. ",
+       "See the README for the data source and the PDF report for the results.",
+       call. = FALSE)
 }
 Hobbit_values <- as.data.frame(read_excel(input_file))
 
@@ -65,7 +74,7 @@ heatmap_plot <- ggplot(cor_data, aes(Var1, Var2, fill = value)) +
   geom_tile(color = "white") +
   scale_fill_gradient2(low = "red", high = "blue", mid = "white",
                        limits = c(-1, 1), na.value = "grey60") +
-  
+
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 60, hjust = 1, size = 7),
         axis.text.y = element_text(size = 7)) +
@@ -114,11 +123,11 @@ print(t_test_result)
 
 # Δημιουργία του Boxplot
 boxplot( age ~ factor(likely), data = Hobbit_values ,
-         main = "Age by Likelihood of Visit",
-         xlab = "Likelihood of Visit",
-         ylab = "Age",
-         col = c("lightblue", "lightgreen", "lightpink", "lightyellow", "lightgray"),
-         border = "darkblue")
+        main = "Age by Likelihood of Visit",
+        xlab = "Likelihood of Visit",
+        ylab = "Age",
+        col = c("lightblue", "lightgreen", "lightpink", "lightyellow", "lightgray"),
+        border = "darkblue")
 # Δημιουργία του Boxplot
 boxplot( age ~ factor(gender), data = Hobbit_values ,
          main = "Age by Gender",
@@ -157,11 +166,11 @@ print(table(Hobbit_values$age_group)
 
 # Δημιουργία Scatter Plot με τις ηλικιακές ομάδες
 print(ggplot(Hobbit_values, aes(x = age, y = totspent, color = age_group)) +
-        geom_point() +
-        labs(title = "Scatter Plot of Total Spent by Age Groups",
-             x = "Age",
-             y = "Total Spent") +
-        theme_minimal()
+  geom_point() +
+  labs(title = "Scatter Plot of Total Spent by Age Groups",
+       x = "Age",
+       y = "Total Spent") +
+  theme_minimal()
 )
 
 # Υπολογισμός ηλικίας
@@ -178,13 +187,13 @@ Hobbit_values$zipcode <- as.factor(Hobbit_values$zipcode)
 # Δημιουργία του γραφήματος χωρίς τη χρήση $
 
 print(ggplot(Hobbit_values, aes(x = drive, fill = zipcode)) +
-        geom_bar(position = "dodge") +
-        labs(
-          title = "Bar Plot of Drive Preference by Zipcode",
-          x = "Drive Preference (1: Very Low - 5: Very High)",
-          y = "Count"
-        ) +
-        theme_minimal()
+  geom_bar(position = "dodge") +
+  labs(
+    title = "Bar Plot of Drive Preference by Zipcode",
+    x = "Drive Preference (1: Very Low - 5: Very High)",
+    y = "Count"
+  ) +
+  theme_minimal()
 )
 
 # Μετατροπή των μεταβλητών σε factors (χωρίς να αλλάξουμε το drive)
@@ -194,70 +203,70 @@ Hobbit_values$zipcode <- as.factor(Hobbit_values$zipcode)
 # Δημιουργία του γραφήματος χωρίς το λάθος στη μεταβλητή drive
 
 print(ggplot(Hobbit_values, aes(x = zipcode, fill = VLPatron, group = VLPatron)) +
-        geom_bar(position = "dodge") +
-        labs(
-          title = "Very Likely Patron by Zipcode",
-          x = "Zipcode",
-          y = "Count"
-        ) +
-        theme_minimal()
+  geom_bar(position = "dodge") +
+  labs(
+    title = "Very Likely Patron by Zipcode",
+    x = "Zipcode",
+    y = "Count"
+  ) +
+  theme_minimal()
 )
 
 # Υπολογισμός του ποσοστού για κάθε συνδυασμό drive και zipcode
 
 print(Hobbit_values %>%
-        count(zipcode, drive) %>%
-        group_by(zipcode) %>%
-        mutate(percentage = n / sum(n) * 100) %>%
-        ggplot(aes(x = drive, y = percentage, fill = zipcode)) +
-        geom_bar(stat = "identity", position = "dodge") +
-        labs(
-          title = "Drive Preference by Zipcode (Percentage)",
-          x = "Drive Preference (1: Very Low - 5: Very High)",
-          y = "Percentage (%)"
-        ) +
-        theme_minimal() +
-        geom_text(aes(label = paste0(round(percentage, 1), "%")), 
-                  position = position_dodge(width = 0.9), vjust = -0.5)
+  count(zipcode, drive) %>%
+  group_by(zipcode) %>%
+  mutate(percentage = n / sum(n) * 100) %>%
+  ggplot(aes(x = drive, y = percentage, fill = zipcode)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    title = "Drive Preference by Zipcode (Percentage)",
+    x = "Drive Preference (1: Very Low - 5: Very High)",
+    y = "Percentage (%)"
+  ) +
+  theme_minimal() +
+  geom_text(aes(label = paste0(round(percentage, 1), "%")), 
+            position = position_dodge(width = 0.9), vjust = -0.5)
 )
 
 # Υπολογισμός του ποσοστού για κάθε συνδυασμό VLPatron και zipcode
 print(Hobbit_values %>%
-        count(zipcode, VLPatron) %>%
-        group_by(zipcode) %>%
-        mutate(percentage = n / sum(n) * 100) %>%
-        ggplot(aes(x = zipcode, y = percentage, fill = VLPatron)) +
-        geom_bar(stat = "identity", position = "dodge") +
-        labs(
-          title = "Likelihood of Patron (VLPatron) by Zipcode (Percentage)",
-          x = "Zipcode",
-          y = "Percentage (%)"
-        ) +
-        theme_minimal() +
-        geom_text(aes(label = paste0(round(percentage, 1), "%")), 
-                  position = position_dodge(width = 0.9), vjust = -0.5)
+  count(zipcode, VLPatron) %>%
+  group_by(zipcode) %>%
+  mutate(percentage = n / sum(n) * 100) %>%
+  ggplot(aes(x = zipcode, y = percentage, fill = VLPatron)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    title = "Likelihood of Patron (VLPatron) by Zipcode (Percentage)",
+    x = "Zipcode",
+    y = "Percentage (%)"
+  ) +
+  theme_minimal() +
+  geom_text(aes(label = paste0(round(percentage, 1), "%")), 
+  position = position_dodge(width = 0.9), vjust = -0.5)
 )
 
 # --------------------------------------------------
-Hobbit_values$hcpatron <- factor(Hobbit_values$hcpatron,
-                                 levels = c(1, 2), labels = c("Yes", "No"))
+  Hobbit_values$hcpatron <- factor(Hobbit_values$hcpatron,
+                                levels = c(1, 2), labels = c("Yes", "No"))
 
-# Υπολογισμός του ποσοστού για κάθε συνδυασμό hcpatron και zipcode
-print(Hobbit_values %>%
-        count(zipcode, hcpatron) %>%
-        group_by(zipcode) %>%
-        mutate(percentage = n / sum(n) * 100) %>%
-        ggplot(aes(x = zipcode, y = percentage, fill = hcpatron)) +
-        geom_bar(stat = "identity", position = "dodge") +
-        labs(
-          title = "Patron Likelihood (hcpatron) by Zipcode (Percentage)",
-          x = "Zipcode",
-          y = "Percentage (%)"
-        ) +
-        theme_minimal() +
-        geom_text(aes(label = paste0(round(percentage, 1), "%")), 
-                  position = position_dodge(width = 0.9), vjust = -0.5)
-)
+  # Υπολογισμός του ποσοστού για κάθε συνδυασμό hcpatron και zipcode
+  print(Hobbit_values %>%
+  count(zipcode, hcpatron) %>%
+  group_by(zipcode) %>%
+  mutate(percentage = n / sum(n) * 100) %>%
+  ggplot(aes(x = zipcode, y = percentage, fill = hcpatron)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    title = "Patron Likelihood (hcpatron) by Zipcode (Percentage)",
+    x = "Zipcode",
+    y = "Percentage (%)"
+  ) +
+  theme_minimal() +
+  geom_text(aes(label = paste0(round(percentage, 1), "%")), 
+            position = position_dodge(width = 0.9), vjust = -0.5)
+  )
 
 # --------------------------------------------------
 
@@ -281,21 +290,21 @@ plot_data <- Hobbit_filtered %>%
 
 # Δημιουργία του γραφήματος
 print(ggplot(plot_data, aes(x = marital, y = percentage, fill = gender)) +
-        geom_bar(stat = "identity", position = "stack") +
-        geom_text(aes(label = paste0(round(percentage, 1), "%")),
-                  position = position_stack(vjust = 0.5), color = "white") +
-        geom_text(data = distinct(plot_data, marital, total),
-                  aes(x = marital, y = 105, label = paste0("N = ", total)),
-                  inherit.aes = FALSE, fontface = "bold", size = 4.5) +
-        labs(
-          title = "Marital Status by Gender (Probable Patrons)",
-          subtitle = "Percent and sample size in each marital group",
-          x = "Marital Status",
-          y = "Percentage (%)"
-        ) +
-        theme_minimal() +
-        scale_fill_manual(values = c("skyblue", "pink")) +
-        ylim(0, 110)
+  geom_bar(stat = "identity", position = "stack") +
+  geom_text(aes(label = paste0(round(percentage, 1), "%")),
+            position = position_stack(vjust = 0.5), color = "white") +
+  geom_text(data = distinct(plot_data, marital, total),
+            aes(x = marital, y = 105, label = paste0("N = ", total)),
+            inherit.aes = FALSE, fontface = "bold", size = 4.5) +
+  labs(
+    title = "Marital Status by Gender (Probable Patrons)",
+    subtitle = "Percent and sample size in each marital group",
+    x = "Marital Status",
+    y = "Percentage (%)"
+  ) +
+  theme_minimal() +
+  scale_fill_manual(values = c("skyblue", "pink")) +
+  ylim(0, 110)
 )
 
 # --------------------------------------------------
@@ -308,12 +317,12 @@ zipcode_data <- Hobbit_values %>%
 
 # Δημιουργία Pie Chart με ggplot2
 print(ggplot(zipcode_data, aes(x = "", y = percentage, fill = zipcode)) +
-        geom_bar(stat = "identity", width = 1) +
-        coord_polar(theta = "y") +
-        geom_text(aes(label = label), 
-                  position = position_stack(vjust = 0.5), color = "white") +
-        labs(title = "Percentage by Zipcode") +
-        theme_void()
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = label), 
+            position = position_stack(vjust = 0.5), color = "white") +
+  labs(title = "Percentage by Zipcode") +
+  theme_void()
 )
 
 # Βεβαιώσου ότι hcpatron είναι factor (1 = Yes, 2 = No)
@@ -343,13 +352,13 @@ plot_data <- decor_long %>%
 
 # Δημιουργία ιστογράμματος με ποσοστά
 print(ggplot(plot_data, aes(x = factor(score), y = percentage, fill = hcpatron)) +
-        geom_bar(stat = "identity", position = "dodge") +
-        facet_wrap(~decor_type, scales = "free_y") +
-        labs(title = "Decor Preferences by Probable Patron Status",
-             x = "Preference Rating (1-5)",
-             y = "Percentage (%)") +
-        theme_minimal() +
-        scale_fill_manual(values = c("lightgreen", "salmon"))
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~decor_type, scales = "free_y") +
+  labs(title = "Decor Preferences by Probable Patron Status",
+       x = "Preference Rating (1-5)",
+       y = "Percentage (%)") +
+  theme_minimal() +
+  scale_fill_manual(values = c("lightgreen", "salmon"))
 )
 
 # Αν το hcpatron είναι factor με Yes/No
@@ -400,12 +409,12 @@ for (var in marketing_vars) {
 
 # Boxplot για κάθε μεταβλητή marketing
 print(ggplot(marketing_long, aes(x = hcpatron, y = score, fill = hcpatron)) +
-        geom_boxplot() +
-        facet_wrap(~marketing_type, scales = "free_y") +
-        labs(title = "Media Response Codes by Probable Patron Status",
-             x = "Probable Patron",
-             y = "Media Response Code") +
-        theme_minimal()
+  geom_boxplot() +
+  facet_wrap(~marketing_type, scales = "free_y") +
+  labs(title = "Media Response Codes by Probable Patron Status",
+       x = "Probable Patron",
+       y = "Media Response Code") +
+  theme_minimal()
 )
 
 # --------------------------------------------------
@@ -433,13 +442,13 @@ plot_data <- marketing_long %>%
 
 # Ιστόγραμμα ποσοστών με Facets
 print(ggplot(plot_data, aes(x = factor(score), y = percentage, fill = hcpatron)) +
-        geom_bar(stat = "identity", position = "dodge") +
-        facet_wrap(~marketing_type, scales = "free_y") +
-        labs(title = "Media Responses by Probable Patron Status",
-             x = "Response Code",
-             y = "Percentage (%)") +
-        theme_minimal() +
-        scale_fill_manual(values = c("skyblue", "orange"))
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~marketing_type, scales = "free_y") +
+  labs(title = "Media Responses by Probable Patron Status",
+       x = "Response Code",
+       y = "Percentage (%)") +
+  theme_minimal() +
+  scale_fill_manual(values = c("skyblue", "orange"))
 )
 
 print(table(Hobbit_values$hcpatron)
@@ -557,7 +566,7 @@ print(TukeyHSD(anova_result)
 )
 
 # --------------------------------------------------
-# 1. Δημιουργούμε μια δυαδική μεταβλητή για το hcpatron (1 = Yes, 0 = No)
+  # 1. Δημιουργούμε μια δυαδική μεταβλητή για το hcpatron (1 = Yes, 0 = No)
 
 # 2. Υπολογισμός μέσων όρων για ντεκόρ και διαφήμιση
 Hobbit_values$decor_mean <- rowMeans(Hobbit_values[, c("elegant", "simple", "string", "jazz")], na.rm = TRUE)
@@ -607,6 +616,7 @@ log_model <- glm(hcpatron_bin ~ avprice ,
 print(summary(log_model)
 )
 plot(log_model, id.n = 0)
+
 
 
 
